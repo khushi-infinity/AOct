@@ -1,0 +1,49 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install evidence adapters
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r code/requirements.txt
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr
+
+      - name: Unit tests
+        run: python -m unittest discover -s code/tests -v
+
+      - name: Custom cases
+        run: python code/evaluation/custom_cases.py
+
+      - name: Generate submission file
+        run: python code/main.py
+
+      - name: Legality checks (518 rows, schema, ordering, citations)
+        run: python code/evaluation/main.py output.csv --requests dataset/deletion_requests.csv
+
+      - name: Public-sample accuracy
+        run: |
+          python code/main.py --requests dataset/sample_deletion_requests.csv --output build/sample_pred.csv
+          python code/evaluation/main.py build/sample_pred.csv \
+            --requests dataset/sample_deletion_requests.csv \
+            --gold dataset/sample_output.csv
+
+      - name: Package
+        run: |
+          rm -f code.zip
+          zip -rq code.zip README.md ENGAGEMENT-BRIEF.md DECISIONS.md Makefile code docs -x "*/__pycache__/*" "*.DS_Store"
+          unzip -l code.zip | tail -3

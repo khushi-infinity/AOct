@@ -153,6 +153,17 @@ cited.
 
 Measured consequences of 1–3 are quantified in `evaluation/evaluation_report.md`.
 
+## Further reading
+
+| Document | Why read it |
+| --- | --- |
+| `../ENGAGEMENT-BRIEF.md` | requirements, acceptance criteria, constraints and risks in one page |
+| `../docs/architecture.md` | containers, observation model, invariants, complexity, failure modes |
+| `../DECISIONS.md` | ADR-001 … ADR-012 with rejected alternatives and measured consequences |
+| `evaluation/evaluation_report.md` | measured metrics, custom cases, failure history, remaining gaps |
+| `evaluation/usage_report.md` | model calls, tokens, cost (measured zeros) |
+| `../docs/interview-prep.md` | the questions a technical judge is likely to ask, with answers |
+
 ---
 
 ## Reproducibility contract

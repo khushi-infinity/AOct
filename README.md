@@ -30,9 +30,21 @@ python3 -m unittest discover -s code/tests -v
 ```
 
 Measured on the 32 public samples: deletion status 1.0000, exact case 0.6875,
-step-sequence 0.7188, step F1 0.9178, field 0.9230. Architecture, decisions,
-known limitations and the failure history are in [`code/README.md`](./code/README.md)
-and [`code/evaluation/evaluation_report.md`](./code/evaluation/evaluation_report.md).
+step-sequence 0.7188, step F1 0.9178, field 0.9230.
+
+| Document | Contents |
+| --- | --- |
+| [`ENGAGEMENT-BRIEF.md`](./ENGAGEMENT-BRIEF.md) | the request restated as an engineering brief: requirements, acceptance criteria, constraints, risks |
+| [`docs/architecture.md`](./docs/architecture.md) | context, containers, observation model, decision pipeline, invariants, complexity, failure modes, test strategy |
+| [`DECISIONS.md`](./DECISIONS.md) | 12 architecture decision records with rejected alternatives and measured consequences |
+| [`code/README.md`](./code/README.md) | module map, design decisions, known limitations, run commands |
+| [`code/evaluation/evaluation_report.md`](./code/evaluation/evaluation_report.md) | measured metrics, custom cases, failure history |
+| [`code/evaluation/usage_report.md`](./code/evaluation/usage_report.md) | model calls, tokens and cost (measured zeros) |
+| [`docs/interview-prep.md`](./docs/interview-prep.md) | the 15 questions a technical judge is likely to ask, with code-grounded answers |
+| [`docs/prompts.md`](./docs/prompts.md) | the prompt pack that reproduces the build and the review |
+
+`make verify` runs the pipeline, legality checks, all unit tests and the custom
+cases; `make package` rebuilds `code.zip`.
 
 ---
 
