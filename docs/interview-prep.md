@@ -16,7 +16,7 @@ the code does and label the rest as a limitation.
 | Baseline (everything `INCOMPLETE`, `[]`) | 0.6875 status, 0.0000 everything else |
 | Full run | 518 rows, 0 legality errors, 5.6 s |
 | Distribution | 368 INCOMPLETE / 140 COMPLETE / 10 NOT_APPLICABLE |
-| Tests | 23 unit tests, 5 custom cases, all passing |
+| Tests | 25 unit tests, 5 custom cases, all passing |
 | Model calls / tokens / cost | 0 / 0 / $0.00 (measured) |
 
 ---

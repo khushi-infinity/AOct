@@ -37,6 +37,11 @@ errors says nothing about accuracy.
 | `field_accuracy` | per-step, per-field equality over the seven required fields |
 | `cause_histogram` | root cause of every missed field / sequence, so fixes target the top cause |
 
+Legality additionally resolves every cited `evidence_id` against the manifest
+(`evidence_files.csv`), the activity stream (`system_activity.csv`) and the
+identity audit trail (`user_audit_log.csv`). An id that is not one of those is an
+error, which is what stops a fabricated or mistyped citation from passing.
+
 Ground truth available to participants is `dataset/sample_output.csv` (32 cases).
 The 518 evaluation cases have no public labels, so they are covered by the
 legality checks and by the custom cases below.
@@ -154,6 +159,10 @@ multilingual, so this is a consequence of `request_text`, not of case ids.
    Konto nicht` was classified as a deletion request. Negations were added for
    German, French, Spanish, Portuguese and Italian, and the test suite now pins
    them.
+7. **Unverified citations (fixed).** The legality checker proved that findings
+   *had* an evidence id, not that the id existed. It now resolves every citation
+   against the three id namespaces and fails on an unknown one; two unit tests
+   cover the reject and accept paths.
 
 ### Remaining, known gaps (not fixed — reported as limitations)
 

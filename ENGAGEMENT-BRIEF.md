@@ -69,7 +69,7 @@ is by operation order, then `system_id`, then `resource_id`.
 | AC2 | Deletion status is correct on every public sample | `evaluation/main.py` → `status_accuracy` |
 | AC3 | Step arrays are structurally identical, not merely plausible | `exact_case_accuracy`, `sequence_accuracy` |
 | AC4 | Field-level fidelity is measured, not asserted | `field_accuracy` per field with a cause histogram |
-| AC5 | Every cited evidence id exists in `evidence_files.csv` and is not captured after `audit_at` | legality checker |
+| AC5 | Every cited evidence id resolves to a manifest file, an activity record or an audit record, and no verdict depends on an event after `audit_at` | legality checker + cutoff unit test |
 | AC6 | Remediation ordering never allows recreation of what was just deleted | unit test + `custom_04` |
 | AC7 | A clean checkout reproduces the submission file byte-for-byte | clean-room unzip run |
 | AC8 | The final run is costed honestly | `evaluation/usage_report.md` |

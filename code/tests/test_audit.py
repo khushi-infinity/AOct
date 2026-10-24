@@ -244,6 +244,63 @@ class EvidenceTests(unittest.TestCase):
             self.assertEqual(len(categories), len(set(categories)))
 
 
+class LegalityTests(unittest.TestCase):
+    """The checker must reject citations that do not resolve to real evidence."""
+
+    @staticmethod
+    def _evaluator():
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "output_evaluator", CODE_DIR / "evaluation" / "main.py"
+        )
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+        return module
+
+    def test_unknown_evidence_id_is_rejected(self) -> None:
+        import csv
+        import tempfile
+
+        evaluator = self._evaluator()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pred.csv"
+            with path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.writer(handle)
+                writer.writerow(["case_id", "deletion_status", "steps_json"])
+                writer.writerow(
+                    [
+                        "case_01",
+                        "COMPLETE",
+                        json.dumps(
+                            [
+                                {
+                                    "step_no": 1,
+                                    "phase": "VERIFICATION",
+                                    "system_id": "account_service",
+                                    "resource_id": "account_001",
+                                    "operation": "VERIFY_RECORD_ABSENT",
+                                    "state": "ABSENT",
+                                    "evidence_id": "evidence_made_up",
+                                }
+                            ]
+                        ),
+                    ]
+                )
+            result = evaluator.validate(path, None, DATASET)
+        messages = " ".join(result["errors"])
+        self.assertIn("evidence_made_up", messages)
+
+    def test_manifest_ids_are_accepted(self) -> None:
+        evaluator = self._evaluator()
+        known = evaluator.known_evidence(DATASET)
+        self.assertIn("evidence_01", known)
+        self.assertTrue(any(item.startswith("activity_") for item in known))
+        self.assertTrue(any(item.startswith("audit_") for item in known))
+
+
+
 class OrderingKeyTests(unittest.TestCase):
     def test_positive_observation_wins_a_timestamp_tie(self) -> None:
         base = dict(

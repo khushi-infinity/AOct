@@ -77,10 +77,10 @@ deletion_requests.csv
 | `audit/evidence.py` | Artefact parsers and the normalised observation model |
 | `audit/policy.py` | `deletion_rules.csv` → finding/remediation/verification triple |
 | `audit/planner.py` | Canonical step ordering, dedupe, consecutive numbering |
-| `evaluation/main.py` | Legality checks + per-field/step/sequence accuracy vs. gold |
+| `evaluation/main.py` | Legality checks (incl. citation resolution) + per-field/step/sequence accuracy vs. gold |
 | `evaluation/custom_cases.py` | Synthetic dataset for uncovered behaviours |
 | `evaluation/baseline.py` (`code/baseline.py`) | Measured floor: everything `INCOMPLETE`, `[]` |
-| `tests/test_audit.py` | 23 unit tests over intent, policy, planner, identity, evidence |
+| `tests/test_audit.py` | 25 unit tests over intent, policy, planner, identity, evidence, citations |
 
 ---
 

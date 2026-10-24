@@ -209,7 +209,7 @@ cheaper than cache invalidation and strictly more reproducible.
 
 | Layer | Test | What it protects |
 | --- | --- | --- |
-| Unit | 23 tests in `code/tests/test_audit.py` | intent (incl. 6 refusal languages), policy per category, ordering, dedupe, identity aliases, cutoff, output contract |
+| Unit | 25 tests in `code/tests/test_audit.py` | intent (incl. 6 refusal languages), policy per category, ordering, dedupe, identity aliases, cutoff, output contract, citation resolution |
 | Scenario | 5 synthetic cases in `code/evaluation/custom_cases.py` | `NOT_APPLICABLE`, historical email, tombstone redaction, active connector, fully remediated case |
 | Corpus | sample scorer, 32 labelled cases | status/exact/sequence/step/field accuracy + cause histogram |
 | Contract | legality checker on 518 rows | schema, allowed operations, citation rules, ordering |

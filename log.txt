@@ -202,3 +202,25 @@ branch=main
 repo_root=/Users/khushisarawagi/Desktop/agentimp/AOct
 worktree=/Users/khushisarawagi/Desktop/agentimp/AOct
 parent_agent=none
+
+## [2026-10-24T16:28:00Z] Close the citation-check gap in the legality checker
+
+User Prompt (verbatim, secrets redacted):
+(continuation of the same turn - no new user message; closing a claim the brief made but the checker did not enforce)
+
+Agent Response Summary:
+The engagement brief's AC5 promised that every cited evidence id is validated, but the checker only proved that a citation existed. Added known_evidence() to resolve citations across evidence_files.csv, system_activity.csv and user_audit_log.csv, wired it into validate() with a --dataset option, and proved both paths: the real output still passes with 0 errors, and an injected bogus id is rejected with exit status 1. Two unit tests pin accept/reject. Updated the brief, architecture, README and report to say 25 tests and to describe the check accurately.
+
+Actions:
+* Edited code/evaluation/main.py (known_evidence, --dataset, unknown-citation error).
+* Added LegalityTests (unknown id rejected, manifest ids accepted) to code/tests/test_audit.py; 25 tests pass.
+* Updated ENGAGEMENT-BRIEF.md AC5, docs/architecture.md, code/README.md, docs/interview-prep.md, code/evaluation/evaluation_report.md (failure #7).
+* Rebuilt code.zip via make package; clean-room unzip + make verify passes and output.csv is byte-identical (518 rows).
+
+Context:
+tool=Freebuff Desktop (Buffy coding agent)
+model=m-7e20df6765 (handle reported by the Freebuff runtime state; the desktop app exposes no public model name to the agent)
+branch=main
+repo_root=/Users/khushisarawagi/Desktop/agentimp/AOct
+worktree=/Users/khushisarawagi/Desktop/agentimp/AOct
+parent_agent=none

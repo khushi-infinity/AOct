@@ -64,7 +64,32 @@ def parse_steps(raw: str, case_id: str, errors: list[str]) -> list[dict[str, Any
     return value
 
 
-def validate(predictions: Path, request_file: Path | None = None) -> dict[str, Any]:
+def known_evidence(dataset: Path) -> set[str]:
+    """Every id a case is allowed to cite: artefacts, activities, audit rows."""
+
+    sources = (
+        ("evidence_files.csv", "file_id"),
+        ("system_activity.csv", "activity_id"),
+        ("user_audit_log.csv", "audit_id"),
+    )
+    known: set[str] = set()
+    for name, column in sources:
+        path = dataset / name
+        if not path.exists():
+            continue
+        with path.open(newline="", encoding="utf-8-sig") as handle:
+            for row in csv.DictReader(handle):
+                value = (row.get(column) or "").strip()
+                if value:
+                    known.add(value)
+    return known
+
+
+def validate(
+    predictions: Path,
+    request_file: Path | None = None,
+    dataset: Path | None = None,
+) -> dict[str, Any]:
     header, rows = read_rows(predictions)
     errors: list[str] = []
     if header != EXPECTED_HEADER:
@@ -81,6 +106,9 @@ def validate(predictions: Path, request_file: Path | None = None) -> dict[str, A
             missing = sorted(set(expected) - set(case_ids))
             extra = sorted(set(case_ids) - set(expected))
             errors.append(f"case coverage mismatch: missing={missing[:5]} extra={extra[:5]}")
+    known = known_evidence(dataset) if dataset and dataset.exists() else set()
+    if not known:
+        errors.append("no evidence manifest found: cited evidence ids cannot be verified")
     for row in rows:
         case_id = row.get("case_id", "<missing>")
         status = row.get("deletion_status", "")
@@ -108,6 +136,11 @@ def validate(predictions: Path, request_file: Path | None = None) -> dict[str, A
                 errors.append(f"{case_id}: future steps must use an empty evidence_id")
             if (status == "COMPLETE" or step["phase"] == "FINDING") and not step["evidence_id"]:
                 errors.append(f"{case_id}: evidence-backed step is missing evidence_id")
+            if step["evidence_id"] and known and step["evidence_id"] not in known:
+                errors.append(
+                    f"{case_id}: evidence_id {step['evidence_id']!r} is not a manifest file, "
+                    "activity or audit record"
+                )
     return {"rows": len(rows), "errors": errors}
 
 
@@ -193,8 +226,9 @@ def main() -> None:
     parser.add_argument("predictions", type=Path)
     parser.add_argument("--requests", type=Path)
     parser.add_argument("--gold", type=Path)
+    parser.add_argument("--dataset", type=Path, default=ROOT / "dataset")
     args = parser.parse_args()
-    legality = validate(args.predictions, args.requests)
+    legality = validate(args.predictions, args.requests, args.dataset)
     metrics = score(args.predictions, args.gold) if args.gold else None
     print_report(legality, metrics)
     if legality["errors"]:
