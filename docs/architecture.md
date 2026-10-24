@@ -93,7 +93,7 @@ right person.
 | Service exports (account, analytics, search, support, backup, security) | `_parse_service_export` | system/group pair decides category; explicit `null` identifiers mean anonymised |
 | SQLite snapshot exports | `_parse_sql` | executed in memory, read-only; table name → category; replication variants handled |
 | Logs (KV, JSON-line, bracket, pipe) | `_parse_text` / `_parse_line` | trace id groups a request's lines so a keyless completion inherits its subject |
-| Shift-handover register | `_parse_handover` | pipe-delimited `time | system | resource | category | result | subject` |
+| Shift-handover register | `_parse_handover` | pipe-delimited `time \| system \| resource \| category \| result \| subject` |
 | PDF | `_parse_media` (`pypdf`) | text is scanned for resource ids and identifiers |
 | Screenshot | `_parse_media` (`tesseract`) | OCR text only; a multi-row table with many subjects is not paired positionally (ambiguity is refused, not guessed) |
 
@@ -227,3 +227,49 @@ cheaper than cache invalidation and strictly more reproducible.
 * **LLM/VLM assist** — would sit *before* the observation model (extractor), not
   in the decision path, so determinism and auditability survive. Deliberately not
   enabled: it would invalidate the reproducibility of the reported metrics.
+
+## 12. Technology stack and why
+
+The stack is chosen against three constraints from the brief: the evaluator must
+run it on an unmodified machine (C2), the reported numbers must be reproducible
+(AC6), and the artefacts contain customer-like records that should not be shipped
+to a third party (C5).
+
+| Layer | Choice | Why this one | Rejected | What rejection would have cost |
+| --- | --- | --- | --- | --- |
+| Language | Python 3.9+, standard library only in the core | the corpus is files, not services; `csv`, `json`, `re`, `sqlite3`, `unicodedata` cover every format; runs with no install step on the grader's machine | Node/TS (weaker text/CSV/SQLite ergonomics for this shape), Rust (performance is not the bottleneck — the whole run is 5.6 s) | a build toolchain in a submission that must run from a zip |
+| Dependencies | zero mandatory third-party packages; `pypdf` and `tesseract` optional and degrading loudly | a clean-room unzip runs on a bare interpreter; an optional adapter that fails prints `WARNING:` and is counted instead of silently reading as "absent" | a heavy data stack (`pandas`) for 2,540 rows | dtype coercion silently rewrites identifier-shaped strings (`user_0007` → `7`) and quoted CSV fields — exactly the class of bug that produces a plausible wrong verdict |
+| Storage | no database; in-memory indexes built per run | the corpus fits in memory (94 artefacts, 2,540 observations), so a full rebuild is cheaper than cache invalidation and strictly more reproducible | a working SQLite/Parquet store | schema drift, stale caches, and a second source of truth beside the evidence |
+| Reading SQLite evidence | stdlib `sqlite3`, in-memory, read-only | the corpus already ships SQLite snapshots; they are input, not a place to keep state | attaching the files as a live DB | mutating or locking an input artefact |
+| Execution model | single process, single pass, sequential, no threads | determinism is graded (ADR-012); the work is CPU-bound and finished in seconds | `multiprocessing` / async I/O | ordering nondeterminism and a class of race bugs, bought for milliseconds |
+| Output | `csv.DictWriter`, compact JSON in the `steps_json` column, explicit `\n` endings | the contract is a CSV; hand-controlled serialisation is what makes re-runs byte-identical | `DataFrame.to_csv`, JSON-lines side files | implicit quoting/dtype differences between environments |
+| Tests | stdlib `unittest` (25 tests) + 5 executable synthetic cases | runs from the zip with no test dependency | `pytest` | a dependency the clean-room run would have to install |
+| Quality gates | `Makefile` targets + one GitHub Actions workflow | every claim in the docs maps to a command; CI runs the same commands | prose-only quality claims | assertions nobody can falsify |
+| Inference | none in the scored path (ADR-001) | reproducible, credential-free, $0, and no customer-like records leaving the machine | hosted LLM/VLM, local model weights | nondeterministic output, credentials in the submission, and reported accuracy nobody else could reproduce |
+
+Operating envelope: **518 cases in ~5.6 s**, no network access, no credentials,
+no environment variables required, memory proportional to the corpus.
+
+## 13. Design trade-offs at a glance
+
+Each row is a place where two defensible designs collided, the choice made, and
+the price paid for it. Full context, rejected alternatives and measured effects
+are in [`../DECISIONS.md`](../DECISIONS.md).
+
+| Trade-off | Chosen | Alternative | Why it was chosen | Cost accepted |
+| --- | --- | --- | --- | --- |
+| Reproducibility vs reasoning flexibility | deterministic local rules (ADR-001) | hosted LLM/VLM in the scored path | the graded artefact must be reproducible by a stranger | free text beyond the intent grammar is not semantically read |
+| Event time vs capture time | event time is the cutoff; capture time only ranks competing evidence, per record (ADR-002) | filter on capture time | a readback recorded before `audit_at` is admissible even if shipped later | an extra preference rule to explain and test |
+| Trusting the workflow vs re-deriving state | workflow status is a claim that may locate but never decide (ADR-003) | accept `COMPLETE` at face value | the entire incident is a dashboard that lied | attribution must be reconstructed from evidence (ADR-005) |
+| Snapshot identity vs audit-trail closure | closure over current and historical identifiers (ADR-004) | match the current email only | requests arrive from retired addresses | 4,553 keys to index; ambiguous shared keys are deterministic but not always unique |
+| Per-case vs batch attribution for deleted accounts | batch (`reported_at`) + result compatibility (ADR-005) | nearest claim in time | time-proximity swapped two real cases and stole another customer's account | one residual batch-ordering disagreement, documented |
+| Owning service vs physical store name | canonical owning service (ADR-007) | emit `support_replica` as written | the graded taxonomy names owners, not replicas | an alias table to maintain as systems are added |
+| Literal evidence vs refusable ambiguity | refuse to pair an OCR table positionally | guess the pairing | a guessed pairing produces a confident wrong verdict | some steps are omitted and reported as gaps |
+| Completeness vs admitting ignorance | omit the step and report the gap (ADR-010) | fabricate a plausible identifier | fabricated evidence is the failure mode this programme exists to punish | 5/12 anonymised steps and 22/24 retained audit records are unreproducible, quantified |
+| Policy in code vs policy as data | loaded from `deletion_rules.csv` (ADR-008) | `if category == ...` branches | a policy revision must not require a code change | a small set of derived rules must be labelled as derived |
+| Every record vs one per category | latest grounded record per category (ADR-009) | emit every record | matches the graded shape and keeps precision | a gold answer listing two records in one category scores one step short |
+| Speed vs incremental state | rebuild everything per run | persistent index/cache | determinism beats milliseconds at this size | the run re-parses 94 artefacts every time |
+
+Two of these rows are losses on the sample set (ADR-005 residue, ADR-010 gaps).
+They are recorded rather than tuned away: a trade-off you cannot name is not a
+design decision, it is a coincidence.

@@ -239,3 +239,40 @@ branch=main
 repo_root=/Users/khushisarawagi/Desktop/agentimp/AOct
 worktree=/Users/khushisarawagi/Desktop/agentimp/AOct
 parent_agent=none
+
+## [2026-10-24T17:23:13Z] Deepen the design record: stack rationale, trade-off ledger, prompt pack
+
+Prompt:
+Make the submission carry its own reasoning. Expand the prompt pack with the full set
+of prompts used across the project, and make the documentation state, with arguments a
+reviewer can check, what the technology stack is and why each choice was made, which
+design alternatives were rejected, what each trade-off cost, and how the pieces of the
+architecture fit together. Every claim must stay executable - no assertion that a
+command cannot reproduce.
+
+Agent Response Summary:
+Expanded docs/prompts.md from 5 to 15 prompts ordered by phase (scope, understand,
+build, measure, harden, ship, defend) with an index table and a per-prompt acceptance
+condition. Added two sections to docs/architecture.md: a technology-stack table (layer,
+choice, why, rejected alternative, cost of rejection) covering language, dependencies,
+storage, execution model, output serialisation, tests, quality gates and the deliberate
+absence of inference, and a design-trade-off ledger of 12 collisions with the cost
+accepted for each, cross-linked to the ADRs. Fixed an unescaped-pipe row in the adapter
+table that broke Markdown rendering, and updated the README document map.
+
+Actions:
+* Rewrote docs/prompts.md (15 prompts, index, acceptance conditions, operating rules).
+* Appended docs/architecture.md sections 12 (technology stack and why) and 13 (design trade-offs).
+* Fixed table rendering in docs/architecture.md section 4 (escaped pipes).
+* Updated README.md document map rows for both documents.
+* Validated every Markdown table and relative link across 8 documents: 0 issues.
+* make verify: pipeline, legality, 25 unit tests, 5/5 custom cases pass.
+* make package: code.zip rebuilt (28 files, 4 under docs/); clean-room unzip in /tmp/cr2 runs make verify and reproduces output.csv byte-identically.
+
+Context:
+tool=Freebuff Desktop (Buffy coding agent)
+model=m-7e20df6765 (handle reported by the Freebuff runtime state; the desktop app exposes no public model name to the agent)
+branch=main
+repo_root=/Users/khushisarawagi/Desktop/agentimp/AOct
+worktree=/Users/khushisarawagi/Desktop/agentimp/AOct
+parent_agent=none
