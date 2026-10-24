@@ -58,8 +58,8 @@ sequence_or_step_count      9
 field:evidence_id           9
 ```
 
-Thirteen of the 32 sample cases now match the gold array byte-for-byte after JSON
-normalisation. Every remaining miss is one of two known, documented gaps
+22 of the 32 sample cases now match the gold array byte-for-byte after JSON
+normalisation. Every remaining miss is one of three known, documented gaps
 (section 6), not a wrong decision: all 32 statuses are correct and no sample case
 contains a finding the engine should not have produced.
 
@@ -160,14 +160,15 @@ multilingual, so this is a consequence of `request_text`, not of case ids.
 * **Anonymised analytics records cannot be linked.** When an analytics profile
   has already been anonymised, the artefact contains no identifier at all
   (`email`, `phone`, `email_hash`, `customer_reference` are all `null`). The gold
-  answer still knows which record belonged to which person. This is the largest
-  single class of remaining misses (9 of 32 sample cases). The engine reports
+  answer still knows which record belonged to which person. 12 of the 32 sample
+  cases carry such a step and the engine reproduces 5 of them. This is the
+  largest single class of remaining misses (7 sample cases). The engine reports
   anonymised records it can link and does not invent resource ids for the rest.
 * **Some retained audit records have no participant-visible id.** For example
   `audit_record_6645` (sample `case_18`) appears nowhere in `dataset/`, yet the
   gold answer includes it. Dedicated readbacks, the shift-handover register and
-  the SQL replicas are used whenever the id is visible (18 of the 24 sample
-  cases that carry an audit record).
+  the SQL replicas are used whenever the id is visible: 22 of the 24 sample cases
+  that carry a retained audit record are reproduced.
 * **Batch-internal account ordering.** When several cases in one batch report the
   same status and their accounts are not named by any readback, the result-compatible
   claims are allocated in time order. One sample case (`case_23`) is ordered
