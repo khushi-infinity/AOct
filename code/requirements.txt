@@ -1,0 +1,15 @@
+# Runtime dependencies for the deletion-audit agent.
+#
+# The engine itself uses only the Python standard library (3.9+).
+# The two optional packages below are evidence adapters: they are needed to read
+# PDF documents and screenshots from dataset/evidence/.  If they are missing the
+# run continues and prints a loud WARNING to stderr for every artefact it could
+# not read, so a degraded run is never silent.
+#
+#   pip install -r requirements.txt
+#
+# pypdf        : PDF text extraction (documents/*.pdf)
+# tesseract    : screenshot OCR (images/*.png) -- system binary, not pip-installable
+#                macOS: brew install tesseract
+#                Debian/Ubuntu: sudo apt-get install tesseract-ocr
+pypdf>=5.0.0
